@@ -18,6 +18,7 @@ subroutine initialize
     call init_fft
     call init_vars
     call SetTemperatureIC
+    call SetVelocityIC
 
 end subroutine initialize
 

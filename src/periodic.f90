@@ -45,28 +45,21 @@ subroutine rk_per_1(rk_step)
             end do
         end do
     end if
-    cfth(:,:,:,:) = 0.0_dp
+    
 
     !! ADVECT THE TRACER - NONLINEAR TERMS
-    ! do n=1,n_th
-    !     do k=xstart(3),xend(3)
-    !         do j=xstart(2),xend(2)
-    !             do i=xstart(1),xend(1)
-    !                 sth(i,j,k) = sin(2*pi/Ly*gy(j))*th(i,j,k,n)
-    !             end do
-    !         end do
-    !     end do
-    !     call decomp_2d_fft_3d(sth, csth)
-    !     do k=cstart(3),cend(3)
-    !         do j=cstart(2),cend(2)
-    !             do i=cstart(1),cend(1)
-    !                 cfth(i,j,k,n) = cfth(i,j,k,n) - cikx(i)*csth(i,j,k)
-    !                 crth(i,j,k,n) = crth(i,j,k,n) + temp2*cfth(i,j,k,n)
-    !             end do
-    !         end do
-    !     end do
-        
-    ! end do
+    do n=1,n_th
+        ! Construct nonlinear terms in cfth
+        call advect_field(th(:,:,:,n), cfth(:,:,:,n))
+        ! Add nonlinear terms to rhs
+        do k=cstart(3),cend(3)
+            do j=cstart(2),cend(2)
+                do i=cstart(1),cend(1)
+                    crth(i,j,k,n) = crth(i,j,k,n) + temp2*cfth(i,j,k,n)
+                end do
+            end do
+        end do
+    end do
 
     ! Solve the implicit system for the intermediate field
     do n=1,n_th
@@ -90,5 +83,67 @@ subroutine rk_per_1(rk_step)
     th = th/rnx/rny/rnz
 
 end subroutine rk_per_1
+
+!> Subroutine for updating cfth with the nonlinear (advection) terms
+!> RHS array crth is updated with the input factor temp * nonlinear terms
+subroutine advect_field(var, cfvar)
+    !> Field (in physical space) to be advected
+    real(dp), dimension(xstart(1):,xstart(2):,xstart(3):), intent(in) :: var
+    !> Output field: (minus) divergence of (velocity * var) in spectral space
+    complex(dp), dimension(cstart(1):,cstart(2):,cstart(3):), intent(out) :: cfvar
+
+    integer :: i, j, k, n
+
+    cfvar(:,:,:) = 0.0_dp
+    ! x-advection
+    do k=xstart(3),xend(3)
+        do j=xstart(2),xend(2)
+            do i=xstart(1),xend(1)
+                s1(i,j,k) = u1(i,j,k)*var(i,j,k)
+            end do
+        end do
+    end do
+    call decomp_2d_fft_3d(s1, cs1)
+    do k=cstart(3),cend(3)
+        do j=cstart(2),cend(2)
+            do i=cstart(1),cend(1)
+                cfvar(i,j,k) = cfvar(i,j,k) - cikx(i)*cs1(i,j,k)
+            end do
+        end do
+    end do
+    ! y-advection
+    do k=xstart(3),xend(3)
+        do j=xstart(2),xend(2)
+            do i=xstart(1),xend(1)
+                s1(i,j,k) = u2(i,j,k)*var(i,j,k)
+            end do
+        end do
+    end do
+    call decomp_2d_fft_3d(s1, cs1)
+    do k=cstart(3),cend(3)
+        do j=cstart(2),cend(2)
+            do i=cstart(1),cend(1)
+                cfvar(i,j,k) = cfvar(i,j,k) - ciky(j)*cs1(i,j,k)
+            end do
+        end do
+    end do
+    ! z-advection
+    do k=xstart(3),xend(3)
+        do j=xstart(2),xend(2)
+            do i=xstart(1),xend(1)
+                s1(i,j,k) = u3(i,j,k)*var(i,j,k)
+            end do
+        end do
+    end do
+    call decomp_2d_fft_3d(s1, cs1)
+    do k=cstart(3),cend(3)
+        do j=cstart(2),cend(2)
+            do i=cstart(1),cend(1)
+                cfvar(i,j,k) = cfvar(i,j,k) - cikz(k)*cs1(i,j,k)
+            end do
+        end do
+    end do
+
+end subroutine advect_field
     
 end module timestepper
