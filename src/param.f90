@@ -21,8 +21,20 @@ module param
 
     logical :: create_new_flow, variable_dt
 
-    real(dp), allocatable :: th(:,:,:,:), sth(:,:,:)
-    complex(dp), allocatable :: cth(:,:,:,:), cfth(:,:,:,:), crth(:,:,:,:), csth(:,:,:)
+    real(dp), allocatable :: th(:,:,:,:)    !< State variable for the scalar fields
+    real(dp), allocatable :: sth(:,:,:)
+        !< Temporary variable in physical space used in timestepper
+        !! for nonlinear term calculation
+    complex(dp), allocatable :: cth(:,:,:,:)
+        !< State variable for scalars in spectral space
+    complex(dp), allocatable :: cfth(:,:,:,:)
+        !< Array storing nonlinear terms for RK timestepping
+        !! Stores data from previous sub-step for use
+        !! so DO NOT OVERWRITE outside of timestepper
+    complex(dp), allocatable :: crth(:,:,:,:)
+        !< Array used for rhs of scalar evolution equation
+    complex(dp), allocatable :: csth(:,:,:)
+        !< Temporary spectral space array
     
 contains
 
