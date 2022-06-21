@@ -17,7 +17,7 @@ subroutine rk_per_1(rk_step)
     real(dp) :: temp1, temp2, temp3, temp4, temp6
 
     temp4 = h_bar(rk_step)*delta_t
-    temp1 = kappa(1)*temp4/2.0_dp
+    temp1 = kappa(1)*temp4*0.5_dp
     temp2 = beta_bar(rk_step)*temp4
     temp3 = zeta_bar(rk_step)*temp4
 
@@ -44,6 +44,7 @@ subroutine rk_per_1(rk_step)
             end do
         end do
     end if
+    cfth(:,:,:,:) = 0.0_dp
 
     ! Transform the scalar concentration to physical space
     do n=1,n_th
