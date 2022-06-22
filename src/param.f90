@@ -22,24 +22,26 @@ module param
 
     logical :: create_new_flow, variable_dt
 
-    real(dp), allocatable :: u1(:,:,:)  !< x-velocity field
-    real(dp), allocatable :: u2(:,:,:)  !< y-velocity field
-    real(dp), allocatable :: u3(:,:,:)  !< z-velocity field
+    real(dp), allocatable :: u(:,:,:,:)  !< velocity field
     real(dp), allocatable :: th(:,:,:,:)    !< Scalar field values
     complex(dp), allocatable :: cth(:,:,:,:)    !< Scalar fields in spectral space
-    complex(dp), allocatable :: cu1(:,:,:) !< x-velocity field in spectral space
-    complex(dp), allocatable :: cu2(:,:,:) !< y-velocity field in spectral space
-    complex(dp), allocatable :: cu3(:,:,:) !< z-velocity field in spectral space
+    complex(dp), allocatable :: cu(:,:,:,:) !< velocity field in spectral space
+    complex(dp), allocatable :: cp(:,:,:)   !< pressure field in spectral space
 
     real(dp), allocatable :: s1(:,:,:)
         !< Temporary variable in physical space used in timestepper
         !! for nonlinear term calculation
     complex(dp), allocatable :: cs1(:,:,:)
         !< Temporary spectral space array
+    complex(dp), allocatable :: cfu(:,:,:,:)
+        !< Array storing nonlinear terms for RK timestepping
+        !! Stores data from previous sub-step for use
+        !! so DO NOT OVERWRITE outside of timestepper
     complex(dp), allocatable :: cfth(:,:,:,:)
         !< Array storing nonlinear terms for RK timestepping
         !! Stores data from previous sub-step for use
         !! so DO NOT OVERWRITE outside of timestepper
+    complex(dp), allocatable :: crhs(:,:,:,:)
     complex(dp), allocatable :: crth(:,:,:,:)
         !< Array used for rhs of scalar evolution equation
     
@@ -50,15 +52,15 @@ contains
 !> and set values equal to zero
 !> N.B. Run AFTER calling init_fft
 subroutine init_vars
-    integer :: i, j, k, n
+    ! integer :: i, j, k, n
 
     !> Allocate memory for velocity arrays
-    allocate(  u1(xstart(1):xend(1),xstart(2):xend(2),xstart(3):xend(3)))
-    allocate(  u2(xstart(1):xend(1),xstart(2):xend(2),xstart(3):xend(3)))
-    allocate(  u3(xstart(1):xend(1),xstart(2):xend(2),xstart(3):xend(3)))
-    allocate( cu1(cstart(1):cend(1),cstart(2):cend(2),cstart(3):cend(3)))
-    allocate( cu2(cstart(1):cend(1),cstart(2):cend(2),cstart(3):cend(3)))
-    allocate( cu3(cstart(1):cend(1),cstart(2):cend(2),cstart(3):cend(3)))
+    allocate(   u(xstart(1):xend(1),xstart(2):xend(2),xstart(3):xend(3),1:3))
+    allocate(  cu(cstart(1):cend(1),cstart(2):cend(2),cstart(3):cend(3),1:3))
+    allocate(  cp(cstart(1):cend(1),cstart(2):cend(2),cstart(3):cend(3)))
+
+    allocate(crhs(cstart(1):cend(1),cstart(2):cend(2),cstart(3):cend(3),1:3))
+    allocate( cfu(cstart(1):cend(1),cstart(2):cend(2),cstart(3):cend(3),1:3))
 
     allocate(  th(xstart(1):xend(1),xstart(2):xend(2),xstart(3):xend(3),1:n_th))
     allocate(  s1(xstart(1):xend(1),xstart(2):xend(2),xstart(3):xend(3)))
@@ -66,30 +68,6 @@ subroutine init_vars
     allocate(crth(cstart(1):cend(1),cstart(2):cend(2),cstart(3):cend(3),1:n_th))
     allocate(cfth(cstart(1):cend(1),cstart(2):cend(2),cstart(3):cend(3),1:n_th))
     allocate( cs1(cstart(1):cend(1),cstart(2):cend(2),cstart(3):cend(3)))
-
-    do n=1,n_th
-        do k=xstart(3),xend(3)
-            do j=xstart(2),xend(2)
-                do i=xstart(1),xend(1)
-                    th(i,j,k,n) = 0.0_dp
-                    s1(i,j,k) = 0.0_dp
-                end do
-            end do
-        end do
-    end do
-
-    do n=1,n_th
-        do k=cstart(3),cend(3)
-            do j=cstart(2),cend(2)
-                do i=cstart(1),cend(1)
-                    cth(i,j,k,n) = 0.0_dp
-                    cs1(i,j,k) = 0.0_dp
-                    crth(i,j,k,n) = 0.0_dp
-                    cfth(i,j,k,n) = 0.0_dp
-                end do
-            end do
-        end do
-    end do
 
 end subroutine init_vars
 
@@ -102,10 +80,11 @@ subroutine create_grid_per
 end subroutine create_grid_per
 
 subroutine destroy_vars
-    deallocate(u1, u2, u3)
-    deallocate(cu1, cu2, cu3)
+    deallocate(u)
+    deallocate(cu, cp)
     deallocate(s1, cs1)
     deallocate(th, cth)
+    deallocate(crhs, cfu)
     deallocate(crth, cfth)
 end subroutine destroy_vars
 

@@ -41,7 +41,7 @@ $(OBJS): obj/%.o: src/%.f90
 
 # Define all module interdependencies
 obj/param.o: obj/grid.o
-obj/diablo_io.o: obj/grid.o obj/param.o obj/fft.o obj/user_IC.o
+obj/diablo_io.o: obj/grid.o obj/param.o obj/fft.o obj/user_IC.o obj/periodic.o
 obj/fft.o: obj/grid.o obj/param.o
 obj/periodic.o: obj/param.o obj/fft.o
 obj/diablo.o: obj/periodic.o obj/param.o obj/diablo_io.o obj/hdf5_mod.o

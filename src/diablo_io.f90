@@ -3,6 +3,7 @@ module IO
     use param
     use fft
     use InitialConditions
+    use timestepper, only: compute_initial_pressure
     use decomp_2d, only : xstart, xend, nrank
     implicit none
     private
@@ -19,6 +20,7 @@ subroutine initialize
     call init_vars
     call SetTemperatureIC
     call SetVelocityIC
+    call compute_initial_pressure
 
 end subroutine initialize
 

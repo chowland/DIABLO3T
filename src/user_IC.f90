@@ -40,17 +40,16 @@ subroutine SetVelocityIC
     do k=xstart(3),xend(3)
         do j=xstart(2),xend(2)
             do i=xstart(1),xend(1)
-                u1(i,j,k) = sin(gy(j))
+                u(i,j,k,1) = sin(gy(j))
             end do
         end do
     end do
 
-    u2(:,:,:) = 0.0_dp
-    u3(:,:,:) = 0.0_dp
+    u(:,:,:,2:) = 0.0_dp
 
-    call decomp_2d_fft_3d(u1, cu1)
-    call decomp_2d_fft_3d(u2, cu2)
-    call decomp_2d_fft_3d(u3, cu3)
+    do n=1,3
+        call decomp_2d_fft_3d(u(:,:,:,n), cu(:,:,:,n))
+    end do
 
 end subroutine SetVelocityIC
 
