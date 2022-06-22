@@ -7,8 +7,8 @@ EXECUTABLE := diablo
 # Configuration settings
 FC := h5pfc
 FFLAGS := -fbacktrace -fbounds-check
-LDFLAGS := -L/home/chris/2decomp_fft/lib -l2decomp_fft -lfftw3
-INCLUDE = -I/home/chris/2decomp_fft/include
+LDFLAGS := -L$(HOME)/2decomp_fft/lib -l2decomp_fft -lfftw3
+INCLUDE = -I$(HOME)/2decomp_fft/include
 SRCDIR = src
 OBJDIR = obj
 MODDIR = mod
@@ -50,20 +50,3 @@ obj/user_IC.o: obj/grid.o obj/param.o
 
 clean:
 	rm -f $(OBJDIR)/*.o $(MODDIR)/*.mod
-
-
-# FC = h5pfc
-
-# USEROPTS = -O2 -mcmodel=large -fimplicit-none
-
-
-# MODOPTS = -J../../obj
-
-# INCLUDE = -I/home/chris/2decomp_fft/include
-
-# F90_FILES := $(wildcard *.f90)
-# OBJECTS := $(patsubst %.f90, %.o, $(F90_FILES))
-
-# # DO NOT USE, NEEDS COMPLETE REWRITE
-
-# param.o: grid.o
