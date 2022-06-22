@@ -1,0 +1,18 @@
+site_name: DIABLO3T Documentation
+repo_name: chowland/DIABLO3T
+repo_url: https://github.com/chowland/DIABLO3T
+site_author: Chris Howland
+
+markdown_extensions:
+    - pymdownx.arithmatex:
+        generic: true
+extra_css:
+    - https://cdn.jsdelivr.net/npm/katex@0.13.13/dist/katex.min.css
+extra_javascript:
+    - javascripts/config.js
+    - https://cdn.jsdelivr.net/npm/katex@0.13.13/dist/katex.min.js
+theme:
+  name: material
+nav:
+  - timestepper.md
+  - validation.md
