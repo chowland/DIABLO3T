@@ -62,3 +62,47 @@ $$
 $$
 
 Again, we treat the diffusive (viscous) term semi-implicitly and all other terms explicitly using the Runge-Kutta method.
+
+## Fractional step for pressure evolution
+A discretised form of the above equation for the velocity gives an intermediate field $u^*$ which may not be divergence free.
+We therefore use a pressure correction $\phi$ such that
+
+$$
+\frac{u_i^{l+1} - u_i^*}{\bar{h}^l \Delta t} = -\partial_i \phi
+$$
+
+to enforce that the velocity at the next time step is divergence free.
+Taking the divergence of the above equation and setting $\nabla \cdot \boldsymbol{u}^{l+1}=0$ gives
+
+$$
+\frac{-\partial_i u_i^*}{\bar{h}^l \Delta t} = -\partial_{ii} \phi , \quad \Rightarrow -k_i k_i \hat{\phi} = \frac{ik_i \hat{u}_i^*}{\bar{h}^l \Delta t}
+$$
+
+So the two steps are to solve for $\phi$ and then to create the divergence-free field:
+
+$$
+\hat{\phi} = -i  \frac{k_i \hat{u}_i^*}{|\mathbf{k}|^2\bar{h}^l\Delta t}, \quad \hat{u}_i^{l+1} = \hat{u}_i^* - ik_i \bar{h}^l \Delta t \hat{\phi}
+$$
+
+Finally, we also need to update the pressure field for the next time step using this correction:
+
+$$
+\hat{p}^{l+1} = \hat{p}^l + \phi
+$$
+
+## Pressure initialisation
+At the first time step, if the pressure field is not prescribed, we need to solve for it.
+Taking the divergence of the momentum equation and imposing incompressibility tells us that
+
+$$
+\nabla^2 p = -\frac{\partial u_i}{\partial x_j} \frac{\partial u_j}{\partial x_i}
+$$
+
+We can be efficient with the number of transforms performed to calculate derivatives here by noting that $R_{ij}=R_{ji}$ where $R$ denotes the expression on the right side of the above equation.
+It's also useful that
+
+$$
+R_{22} = -(\partial_y v)^2 = -(\partial_x u + \partial_z w)^2 = R_{11} + R_{33} - 2\partial_x u \partial_z w
+$$
+
+This step is performed in the subroutine `compute_initial_pressure` in the `timestepper` module.
