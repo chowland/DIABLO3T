@@ -140,7 +140,7 @@ subroutine rk_per_1(rk_step)
     ! Compute second fractional step...
     ! Make cu divergence free, and save pressure step in cs1
     call remove_divergence
-    ! Update pressure
+    ! ! ! Update pressure
     do k=cstart(3),cend(3)
         do j=cstart(2),cend(2)
             do i=cstart(1),cend(1)
@@ -183,6 +183,14 @@ subroutine advect_field(var, cfvar)
             end do
         end do
         call decomp_2d_fft_3d(s1, cs1)
+        ! Dealias the highest modes
+        do k=cstart(3),cend(3)
+            do j=cstart(2),cend(2)
+                do i=cstart(1),cend(1)
+                    if (alias(i,j,k)) cs1(i,j,k) = 0.0_dp
+                end do
+            end do
+        end do
         if (n==1) then
             do k=cstart(3),cend(3)
                 do j=cstart(2),cend(2)
@@ -213,7 +221,7 @@ subroutine advect_field(var, cfvar)
 end subroutine advect_field
     
 subroutine remove_divergence
-    integer :: i, j, k, n
+    integer :: i, j, k
     real(dp) :: temp
 
     cs1(:,:,:) = 0.0_dp
@@ -240,22 +248,23 @@ subroutine compute_initial_pressure
     ! Use s1 as working variable for pressure in physical space
     s1(:,:,:) = 0.0_dp
 
-    ! (du/dx) & (dw/dz) [& implicitly (dv/dy)]
+    ! (du/dx) & (dv/dy) [& implicitly (dw/dz)]
     do k=cstart(3),cend(3)
         do j=cstart(2),cend(2)
             do i=cstart(1),cend(1)
                 cfu(i,j,k,1) = cikx(i)*cu(i,j,k,1)
-                cfu(i,j,k,2) = cikz(k)*cu(i,j,k,3)
+                cfu(i,j,k,2) = ciky(j)*cu(i,j,k,2)
             end do
         end do
     end do
     do n=1,2
         call decomp_2d_fft_3d(cfu(:,:,:,n), s2(:,:,:,n))
     end do
+    s2 = s2/rnx/rny/rnz
     do k=xstart(3),xend(3)
         do j=xstart(2),xend(2)
             do i=xstart(1),xend(1)
-                s1(i,j,k) = 2*(s1(i,j,k) + s2(i,j,k,1)*s2(i,j,k,1) &
+                s1(i,j,k) = 2*(s2(i,j,k,1)*s2(i,j,k,1) &
                         + s2(i,j,k,1)*s2(i,j,k,2) + s2(i,j,k,2)*s2(i,j,k,2))
             end do
         end do
@@ -264,14 +273,15 @@ subroutine compute_initial_pressure
     do k=cstart(3),cend(3)
         do j=cstart(2),cend(2)
             do i=cstart(1),cend(1)
-                cfu(i,j,k,1) = ciky(i)*cu(i,j,k,1)
-                cfu(i,j,k,2) = cikx(k)*cu(i,j,k,2)
+                cfu(i,j,k,1) = ciky(j)*cu(i,j,k,1)
+                cfu(i,j,k,2) = cikx(i)*cu(i,j,k,2)
             end do
         end do
     end do
     do n=1,2
         call decomp_2d_fft_3d(cfu(:,:,:,n), s2(:,:,:,n))
     end do
+    s2 = s2/rnx/rny/rnz
     do k=xstart(3),xend(3)
         do j=xstart(2),xend(2)
             do i=xstart(1),xend(1)
@@ -291,6 +301,7 @@ subroutine compute_initial_pressure
     do n=1,2
         call decomp_2d_fft_3d(cfu(:,:,:,n), s2(:,:,:,n))
     end do
+    s2 = s2/rnx/rny/rnz
     do k=xstart(3),xend(3)
         do j=xstart(2),xend(2)
             do i=xstart(1),xend(1)
@@ -310,6 +321,7 @@ subroutine compute_initial_pressure
     do n=1,2
         call decomp_2d_fft_3d(cfu(:,:,:,n), s2(:,:,:,n))
     end do
+    s2 = s2/rnx/rny/rnz
     do k=xstart(3),xend(3)
         do j=xstart(2),xend(2)
             do i=xstart(1),xend(1)
@@ -322,6 +334,7 @@ subroutine compute_initial_pressure
     do k=cstart(3),cend(3)
         do j=cstart(2),cend(2)
             do i=cstart(1),cend(1)
+                if (alias(i,j,k)) cp(i,j,k) = 0.0
                 cp(i,j,k) = cp(i,j,k)/(kx2(i) + ky2(j) + kz2(k) + 1e-14)
             end do
         end do
