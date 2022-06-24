@@ -2,7 +2,7 @@ module diabloH5
     use HDF5
     use MPI
     use grid, only: nx, ny, nz, n_th, rnx, rny, rnz
-    use param, only: time, save_flow_int, th, cth
+    use param, only: time, save_flow_int, u, th, s1, cp
     use decomp_2d, only: xstart, xsize, xend
     use decomp_2d_fft
     implicit none
@@ -73,12 +73,6 @@ subroutine write_flow_field(final)
                         file_id, error, access_prp = plist_id)
     call h5pclose_f(plist_id, error)
 
-    !> Convert each variable into physical space
-    do n=1,n_th
-        call decomp_2d_fft_3d(cth(:,:,:,n), th(:,:,:,n))
-    end do
-    th = th/rnx/rny/rnz
-
     ! Missing: create prop list for chunked dataset creation
 
     !> Create the dataspaces for the variables
@@ -88,6 +82,25 @@ subroutine write_flow_field(final)
     !> Create the property list for the parallel dataset write
     call h5pcreate_f(h5p_dataset_xfer_f, plist_id, error)
     call h5pset_dxpl_mpio_f(plist_id, h5fd_mpio_collective_f, error)
+
+    do n=1,3
+        write(frame,'(i1.1)') n
+        dname="u"//trim(frame)
+        !> Create the dataset item in the file
+        call h5dcreate_f(file_id, trim(dname), H5T_NATIVE_DOUBLE, &
+                            filespace_id, dset_id, error)
+        !> Select hyperslabs in file and memory spaces
+        call h5sselect_hyperslab_f(filespace_id, h5s_select_set_f, &
+                            offset_f, count, error, stride, dimsm)
+        call h5sselect_hyperslab_f(memspace_id, h5s_select_set_f, &
+                            offset_m, count, error, stride, dimsm)
+        !> Write the dataset collectively
+        call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, &
+                    u(xstart(1):xend(1), xstart(2):xend(2), xstart(3):xend(3),n), &
+                    dimsm, error, file_space_id = filespace_id, mem_space_id = memspace_id)
+        !> Close dataset
+        call h5dclose_f(dset_id, error)
+    end do
 
     do n=1,n_th
         write(frame,'(i1.1)') n
@@ -108,6 +121,24 @@ subroutine write_flow_field(final)
         call h5dclose_f(dset_id, error)
     end do
 
+    call decomp_2d_fft_3d(cp, s1)
+    s1 = s1/rnx/rny/rnz
+    dname="p"
+    !> Create the dataset item in the file
+    call h5dcreate_f(file_id, trim(dname), H5T_NATIVE_DOUBLE, &
+                        filespace_id, dset_id, error)
+    !> Select hyperslabs in file and memory spaces
+    call h5sselect_hyperslab_f(filespace_id, h5s_select_set_f, &
+                        offset_f, count, error, stride, dimsm)
+    call h5sselect_hyperslab_f(memspace_id, h5s_select_set_f, &
+                        offset_m, count, error, stride, dimsm)
+    !> Write the dataset collectively
+    call h5dwrite_f(dset_id, H5T_NATIVE_DOUBLE, &
+                s1(xstart(1):xend(1), xstart(2):xend(2), xstart(3):xend(3)), &
+                dimsm, error, file_space_id = filespace_id, mem_space_id = memspace_id)
+    !> Close dataset
+    call h5dclose_f(dset_id, error)
+
     !> Close dataspaces
     call h5sclose_f(filespace_id, error)
     call h5sclose_f(memspace_id, error)
@@ -118,11 +149,6 @@ subroutine write_flow_field(final)
     !> Close file and HDF5 interface
     call h5fclose_f(file_id, error)
     call h5close_f(error)
-
-    !> Convert variables back to spectral space
-    do n=1,n_th
-        call decomp_2d_fft_3d(th(:,:,:,n), cth(:,:,:,n))
-    end do
 
 end subroutine write_flow_field
     
