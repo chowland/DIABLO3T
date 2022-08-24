@@ -6,7 +6,7 @@ module timestepper
     implicit none
     private
 
-    public :: rk_per_1, compute_initial_pressure
+    public :: rk_per_1, compute_initial_pressure, remove_divergence
     
 contains
 
@@ -14,7 +14,7 @@ subroutine rk_per_1(rk_step)
     integer, intent(in) :: rk_step
     
     integer :: i, j, k, n
-    real(dp) :: temp1, temp2, temp3, temp4, temp5
+    real(dp) :: temp1, temp2, temp3, temp4, temp5, sgn
 
     temp4 = h_bar(rk_step)*delta_t
     temp1 = nu*temp4*0.5_dp
@@ -82,9 +82,14 @@ subroutine rk_per_1(rk_step)
     ! Advection in momentum equation
     !!! NB DIABLO_PER USES JUST 6 FFTS HERE, TAKING ADVANTAGE OF SYMMETRY
     !!! THIS WILL PROBABLY WANT IMPLEMENTING
+    ! Reset array to zero (add forcing and buoyancy terms here if using)
+    cfu(:,:,:,:) = 0.0_dp
+    ! call add_momentum_forcing
+    ! Add buoyancy
+    do n=1,n_th
+        cfu(:,:,:,2) = cfu(:,:,:,2) + Ri_tau(n)*cth(:,:,:,n)
+    end do
     do n=1,3
-        ! Reset array to zero (add forcing and buoyancy terms here if using)
-        cfu(:,:,:,n) = 0.0_dp
         call advect_field(u(:,:,:,n), cfu(:,:,:,n))
         do k=cstart(3),cend(3)
             do j=cstart(2),cend(2)
@@ -97,8 +102,11 @@ subroutine rk_per_1(rk_step)
 
     ! Advection in scalar equations
     do n=1,n_th
+        sgn = sign(1.0_dp, Ri_tau(n))
         ! Reset array to zero (add forcing terms here if using)
         cfth(:,:,:,n) = 0.0_dp
+        ! Add buoyancy constraint
+        cfth(:,:,:,n) = -sgn*cu(:,:,:,2)
         ! Construct nonlinear terms in cfth
         call advect_field(th(:,:,:,n), cfth(:,:,:,n))
         ! Add nonlinear terms to rhs
@@ -169,7 +177,7 @@ subroutine advect_field(var, cfvar)
     !> Field (in physical space) to be advected
     real(dp), dimension(xstart(1):,xstart(2):,xstart(3):), intent(in) :: var
     !> Output field: (minus) divergence of (velocity * var) in spectral space
-    complex(dp), dimension(cstart(1):,cstart(2):,cstart(3):), intent(out) :: cfvar
+    complex(dp), dimension(cstart(1):,cstart(2):,cstart(3):), intent(inout) :: cfvar
 
     integer :: i, j, k, n
 
