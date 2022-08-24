@@ -52,7 +52,7 @@ subroutine init_fft
         ky(j+1) = j*2.0_dp*pi/Ly
         ky2(j+1) = ky(j+1)**2
         ciky(j+1) = ci*ky(j+1)
-        if (j > 1) then
+        if (j > 0) then
             ky(ny+1-j) = -ky(j+1)
             ky2(ny+1-j) = ky(j+1)**2
             ciky(ny+1-j) = -ci*ky(j+1)
@@ -68,7 +68,7 @@ subroutine init_fft
         kz(k+1) = k*2.0_dp*pi/Lz
         kz2(k+1) = kz(k+1)**2
         cikz(k+1) = ci*kz(k+1)
-        if (k > 1) then
+        if (k > 0) then
             kz(nz+1-k) = -kz(k+1)
             kz2(nz+1-k) = kz(k+1)**2
             cikz(nz+1-k) = -ci*kz(k+1)
