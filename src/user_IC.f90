@@ -11,6 +11,7 @@ contains
 subroutine SetTemperatureIC
     integer :: i, j, k, n
 
+    if (n_th > 0) then
     do k=xstart(3),xend(3)
         do j=xstart(2),xend(2)
             do i=xstart(1),xend(1)
@@ -18,6 +19,7 @@ subroutine SetTemperatureIC
             end do
         end do
     end do
+    end if
 
     if (n_th > 1) then
         do k=xstart(3),xend(3)

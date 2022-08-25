@@ -1,6 +1,7 @@
 module timestepper
     use param
     use fft
+    use forcing
     use decomp_2d
     use decomp_2d_fft
     implicit none
@@ -158,7 +159,7 @@ subroutine rk_per_1(rk_step)
     end do
 
     ! Update the velocity fields in physical space
-    do n=1,n_th
+    do n=1,3
         call decomp_2d_fft_3d(cu(:,:,:,n), u(:,:,:,n))
     end do
     u = u/rnx/rny/rnz
@@ -343,6 +344,7 @@ subroutine compute_initial_pressure
         do j=cstart(2),cend(2)
             do i=cstart(1),cend(1)
                 if (alias(i,j,k)) cp(i,j,k) = 0.0
+                if ((i==1) .and. (j==1) .and. (k==1)) cp(i,j,k) = 0.0
                 cp(i,j,k) = cp(i,j,k)/(kx2(i) + ky2(j) + kz2(k) + 1e-14)
             end do
         end do
