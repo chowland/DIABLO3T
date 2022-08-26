@@ -107,7 +107,7 @@ subroutine rk_per_1(rk_step)
         ! Reset array to zero (add forcing terms here if using)
         cfth(:,:,:,n) = 0.0_dp
         ! Add buoyancy constraint
-        cfth(:,:,:,n) = -sgn*cu(:,:,:,2)
+        cfth(:,:,:,n) = -cu(:,:,:,2)
         ! Construct nonlinear terms in cfth
         call advect_field(th(:,:,:,n), cfth(:,:,:,n))
         ! Add nonlinear terms to rhs
