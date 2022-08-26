@@ -365,12 +365,6 @@ subroutine update_dt_CFL
     idy = ny/Ly
     idz = nz/Lz
 
-    if (nrank==0) then
-        write(*,*) 'idx: ',idx
-        write(*,*) 'idy: ',idy
-        write(*,*) 'idz: ',idz
-    end if
-
     local_cfl = 1e-10
 
     do k=xstart(3),xend(3)
