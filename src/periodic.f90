@@ -7,7 +7,8 @@ module timestepper
     implicit none
     private
 
-    public :: rk_per_1, compute_initial_pressure, remove_divergence
+    public :: rk_per_1, compute_initial_pressure, remove_divergence, &
+                update_dt_CFL
     
 contains
 
@@ -351,5 +352,47 @@ subroutine compute_initial_pressure
     end do
 
 end subroutine compute_initial_pressure
+
+!> Subroutine for updating the timestep based on the CFL condition
+subroutine update_dt_CFL
+    use MPI
+    real :: local_cfl, tempcfl
+    real :: global_cfl
+    real :: idx, idy, idz   !> Inverse grid spacing (1/dx etc.)
+    integer :: i, j, k, ierr
+
+    idx = nx/Lx
+    idy = ny/Ly
+    idz = nz/Lz
+
+    if (nrank==0) then
+        write(*,*) 'idx: ',idx
+        write(*,*) 'idy: ',idy
+        write(*,*) 'idz: ',idz
+    end if
+
+    local_cfl = 1e-10
+
+    do k=xstart(3),xend(3)
+        do j=xstart(2),xend(2)
+            do i=xstart(1),xend(1)
+                tempcfl = abs(u(i,j,k,1))*idx + &
+                            abs(u(i,j,k,2))*idy + &
+                            abs(u(i,j,k,3))*idz
+                local_cfl = max(local_cfl,tempcfl)
+            end do
+        end do
+    end do
+
+    !> Calculate max CFL across all processes
+    call MPI_ALLREDUCE(local_cfl, global_cfl, 1, &
+        MPI_DOUBLE_PRECISION, MPI_MAX, MPI_COMM_WORLD, ierr)
+
+    if (variable_dt) then
+        delta_t = min(dtmax, CFL/global_cfl)
+    else
+        if (delta_t > CFL/global_cfl) write(*,*) 'CFL condition broken: dt too big!'
+    end if
+end subroutine update_dt_CFL
 
 end module timestepper

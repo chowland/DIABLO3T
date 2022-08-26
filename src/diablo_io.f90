@@ -75,6 +75,8 @@ subroutine read_input_file
         kappa(n) = nu/Pr(n)
     end do
 
+    dtmax = delta_t
+
 end subroutine read_input_file
 
 end module IO

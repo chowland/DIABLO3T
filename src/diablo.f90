@@ -31,7 +31,9 @@ program DIABLO
     first_step = time_step
 
     do time_step = time_step+1, time_step+n_time_steps
-        if (nrank == 0) write(*,*) 'Now beginning time step = ',time_step
+        if (nrank == 0) write(*,*) 'Now beginning time step = ',time_step,'  dt = ',delta_t
+
+        call update_dt_CFL
 
         do rk_step = 1,3
             call rk_per_1(rk_step)

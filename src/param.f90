@@ -6,7 +6,7 @@ module param
     use decomp_2d, only : xstart, xend
     implicit none
 
-    real(dp) :: nu, Lx, Ly, Lz, delta_t, CFL
+    real(dp) :: nu, Lx, Ly, Lz, delta_t, CFL, dtmax
     real(dp) :: save_flow_int, save_stats_int
     real(dp) :: time, time_limit
     real(dp), dimension(1:n_th) :: Ri_tau, Pr, kappa
