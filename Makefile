@@ -34,7 +34,7 @@ $(EXECUTABLE): $(OBJS) $(MODFILES)
 	$(FC) $(LDFLAGS) -o $@ $^
 
 # Create object files from Fortran source
-$(OBJS): obj/%.o: src/%.f90
+$(OBJS): $(OBJDIR)/%.o: $(SRCDIR)/%.f90
 	$(FC) $(INCLUDE) -c -o $@ $<
 # %.o: src/%.f90
 # 	$(FC) $(INCLUDE) $(FFLAGS) $< -o $@
@@ -43,10 +43,11 @@ $(OBJS): obj/%.o: src/%.f90
 obj/param.o: obj/grid.o
 obj/diablo_io.o: obj/grid.o obj/param.o obj/fft.o obj/user_IC.o obj/periodic.o
 obj/fft.o: obj/grid.o obj/param.o
-obj/periodic.o: obj/param.o obj/fft.o
+obj/periodic.o: obj/param.o obj/fft.o obj/user_rhs.o
 obj/diablo.o: obj/periodic.o obj/param.o obj/diablo_io.o obj/hdf5_mod.o
 obj/hdf5_mod.o: obj/grid.o obj/param.o
-obj/user_IC.o: obj/grid.o obj/param.o
+obj/user_IC.o: obj/grid.o obj/param.o obj/periodic.o obj/fft.o
+obj/user_rhs.o: obj/grid.o obj/param.o
 
 clean:
-	rm -f $(OBJDIR)/*.o $(MODDIR)/*.mod
+	rm -f $(OBJDIR)/*.o $(MODDIR)/*.mod diablo
