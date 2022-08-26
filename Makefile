@@ -4,9 +4,18 @@ MAKEFLAGS += --no-builtin-rules --no-builtin-variables
 # Project name
 EXECUTABLE := diablo
 
+# Base compiler (set as either "GCC" or "INTEL")
+BASEC := "GCC"
+
 # Configuration settings
 FC := h5pfc
-FFLAGS := -fbacktrace -fbounds-check
+ifeq ($(BASEC),"GCC")
+	FFLAGS := -pg -fbacktrace -fbounds-check
+endif
+ifeq ($(BASEC),"INTEL")
+	# FFLAGS := -g -traceback -check bounds
+	FFLAGS := -O3 -mtune=skylake -xCORE-AVX512 -m64 -fPIC
+endif
 LDFLAGS := -L$(HOME)/2decomp_fft/lib -l2decomp_fft -lfftw3
 INCLUDE = -I$(HOME)/2decomp_fft/include
 SRCDIR = src
@@ -15,7 +24,12 @@ MODDIR = mod
 RM := rm -f
 
 FC += $(FFLAGS)
-FC += -J $(MODDIR)
+ifeq ($(BASEC),"GCC")
+	FC += -J $(MODDIR)
+endif
+ifeq ($(BASEC),"INTEL")
+	FC += -module $(MODDIR)
+endif
 
 # List of all source files
 SRCS := $(wildcard src/*.f90)
