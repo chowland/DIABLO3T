@@ -1,7 +1,7 @@
 module timestepper
     use param
     use fft
-    use forcing
+    ! use forcing
     use decomp_2d
     use decomp_2d_fft
     implicit none
