@@ -4,21 +4,21 @@
 !      FLAVOR           VERSION
     'Basic'         3.0
 ! Parameters:  NU,     1/(2*PI)*(LX,         LY,       LZ)
-               1e-2      1.0         1.0      0.01
+               8.2e-2           0.5         1.0       0.01
 ! Method:     CREATE_NEW_FLOW
                   .FALSE.
 ! Time March:  N_TIME_STEPS, TIME_LIMIT, DELTA_T, RESET_TIME,  VARIABLE_DT, CFL, UPDATE_DT
-                 500      100000      0.01     .FALSE.       .false.      0.5      1
+                 40000      100000      1e-1     .FALSE.       .true.      0.5      1
 ! I/O:         VERBOSITY, SAVE_FLOW_INT, SAVE_STATS_INT,   MOVIE
-                   2            0.1          100          .TRUE.
+                   2            1.0          100          .TRUE.
 ! Movie planes:    NX_MOV, NX_MOV_TH, NY_MOV, NY_MOV_TH, NZ_MOV, NZ_MOV_TH
                     0       0          0       0          0       0
 ! Here include 6*N_TH lines, see below for format
 !         CREATE_FLOW_TH(1)  Create new field or Read from DIABLO_TH.START
                .FALSE.
 !         RI_TAU(1)               PR(1)       REACTION(1)
-             1.0                  1.0        0.0
-!         CREATE_FLOW_TH(1)  Create new field or Read from DIABLO_TH.START
+             597.1                7.0         0.0
+!         CREATE_FLOW_TH(2)  Create new field or Read from DIABLO_TH.START
                .FALSE.
-!         RI_TAU(1)               PR(1)       REACTION(1)
-             1.0                  10.0        0.0
+!         RI_TAU(2)               PR(2)       REACTION(2)
+             -542.9               21.0        0.0
