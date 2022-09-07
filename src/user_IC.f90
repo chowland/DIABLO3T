@@ -13,6 +13,8 @@ contains
 subroutine SetTemperatureIC
     integer :: i, j, k, n
 
+    call random_seed()
+
     if (n_th > 0) then
         do k=xstart(3),xend(3)
             do j=xstart(2),xend(2)
@@ -47,6 +49,8 @@ end subroutine SetTemperatureIC
 subroutine SetVelocityIC
     integer :: i, j, k
     real(dp) :: amp, rvar
+
+    call random_seed()
 
     amp = 1e-1
     do k=xstart(3),xend(3)
